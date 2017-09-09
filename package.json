@@ -1,13 +1,13 @@
 {
-  "name": "p2p-store",
+  "name": "p2p-db",
   "description": "an open-ended peer-to-peer database",
   "author": "Stephen Whitmore <sww@eight.net>",
   "version": "0.0.0",
   "repository": {
-    "url": "git://github.com/noffle/p2p-store.git"
+    "url": "git://github.com/noffle/p2p-db.git"
   },
-  "homepage": "https://github.com/noffle/p2p-store",
-  "bugs": "https://github.com/noffle/p2p-store/issues",
+  "homepage": "https://github.com/noffle/p2p-db",
+  "bugs": "https://github.com/noffle/p2p-db/issues",
   "main": "index.js",
   "scripts": {
     "test": "tape test/*.js",
