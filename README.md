@@ -5,6 +5,7 @@
 ## Usage
 
 ```js
+// database creation
 var p2p = require('p2p-db')
 var hyperdb = require('hyperdb')
 var ram = require('random-access-memory')
@@ -12,7 +13,33 @@ var ram = require('random-access-memory')
 var hyper = hyperdb(ram, { valueEncoding: 'json' })
 var db = p2p(hyper)
 
-// ...
+// add a schema
+db.schema('node', {
+  isValid: function (node) {
+    return typeof node.lat === 'number' &&
+           typeof node.lon === 'number' &&
+           typeof node.tags === 'object'
+  },
+  // isCorrect: function (node, cb) {
+  //   // ...
+  //   cb()
+  // }
+})
+
+// add a view
+var Spatial = require('p2p-db-point-store')
+var GeoStore = require('grid-point-store')
+var memdb = require('memdb')
+
+var geo = GeoStore(memdb())
+
+db.view('geo', Spatial(geo))
+
+// insert & query data
+db.insert('node', { lat: 14, lon: 27, tags: {} })
+db.geo.query([[-30, -30], [30, 30]], function (err, nodes) {
+  console.log(err, nodes)
+})
 ```
 
 outputs
