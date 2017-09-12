@@ -87,10 +87,15 @@ Installs the API provided by the `apiModule` instance under the object key
 `name`. `name` becomes a property of `db`. An error is thrown if there is a name
 conflict.
 
-### var ds = db.replicate()
+### var ds = db.replicate([opts])
 
 Creates a duplex stream `ds` that can be used to replicate this database with a
 p2p-db on the other end of another replication stream.
+
+Valid `opts` include:
+
+- `live` (Boolean): if `true`, the duplex stream will not close on its own: new
+  changes will continue to be sent in both directions. Defaults to `false`.
 
 
 ## Install
