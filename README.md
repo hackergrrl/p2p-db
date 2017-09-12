@@ -41,15 +41,32 @@ var geo = GeoStore(memdb())
 db.install('geo', Spatial(geo))
 
 
-// insert & query data
-db.geo.query([[-30, -30], [30, 30]], function (err, nodes) {
-  console.log(err, nodes)
-})
+
+// sync with another p2p-db
+var db2 = p2p(hyper(ram(), { valueEncoding: 'json' }))
+
+var rs1 = db.replicate()
+var rs2 = db2.replicate()
+
+rs1.pipe(rs2).pipe(rs1)
+
+rs1.once('end', onDone)
+rs1.once('error', onDone)
+
+function onDone (err) {
+  console.log('replication', err ? 'failed' : 'succeeded')
+
+  // query data
+  db2.geo.query([[-30, -30], [30, 30]], function (err, nodes) {
+    console.log(err, nodes)
+  })
+}
 ```
 
 outputs
 
 ```
+replication succeeded
 { lat: 14, lon: 27, changeset: '52033272934', tags: {} }
 ```
 
@@ -63,6 +80,17 @@ var p2p = require('p2p-db')
 
 Creates a new p2p-db `db`, using the
 [hyperdb](https://github.com/mafintosh/hyperdb) instance `hyper`.
+
+### db.install(name, apiModule)
+
+Installs the API provided by the `apiModule` instance under the object key
+`name`. `name` becomes a property of `db`. An error is thrown if there is a name
+conflict.
+
+### var ds = db.replicate()
+
+Creates a duplex stream `ds` that can be used to replicate this database with a
+p2p-db on the other end of another replication stream.
 
 
 ## Install
