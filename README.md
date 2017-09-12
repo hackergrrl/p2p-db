@@ -4,6 +4,8 @@
 
 ## Usage
 
+Let's create a minimal distributed OpenStreetMap database:
+
 ```js
 // database creation
 var p2p = require('p2p-db')
@@ -13,30 +15,33 @@ var ram = require('random-access-memory')
 var hyper = hyperdb(ram, { valueEncoding: 'json' })
 var db = p2p(hyper)
 
-// add a schema
-db.schema('node', {
-  isValid: function (node) {
-    return typeof node.lat === 'number' &&
-           typeof node.lon === 'number' &&
-           typeof node.tags === 'object'
-  },
-  // isCorrect: function (node, cb) {
-  //   // ...
-  //   cb()
-  // }
+
+// add an API module that extends the database with OpenStreetMap primitives
+var OsmTypes = require('p2p-db-osm-types')
+
+db.install('osm', OsmTypes())
+
+db.osm.beginChangeset(function (err, id) {
+  db.osm.insertNode({
+    lat: 14,
+    lon: 27,
+    changeset: id,
+    tags: {}
+  })
+  db.osm.finishChangeset(id)
 })
 
-// add a view
-var Spatial = require('p2p-db-point-store')
+// add a view for querying points
 var GeoStore = require('grid-point-store')
 var memdb = require('memdb')
+var Spatial = require('p2p-db-point-store')
 
 var geo = GeoStore(memdb())
 
-db.view('geo', Spatial(geo))
+db.install('geo', Spatial(geo))
+
 
 // insert & query data
-db.insert('node', { lat: 14, lon: 27, tags: {} })
 db.geo.query([[-30, -30], [30, 30]], function (err, nodes) {
   console.log(err, nodes)
 })
@@ -45,7 +50,7 @@ db.geo.query([[-30, -30], [30, 30]], function (err, nodes) {
 outputs
 
 ```
-...
+{ lat: 14, lon: 27, changeset: '52033272934', tags: {} }
 ```
 
 ## API
