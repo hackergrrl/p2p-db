@@ -2,6 +2,22 @@
 
 > An open-ended peer-to-peer database.
 
+## Mad Science
+
+I don't know what this is or what it will be or if the API will change. Still
+experimenting. Don't rely on this for anything, but *do* send PRs and issues
+with your thoughts!
+
+Semantic versioning will be respected.
+
+## Goals
+
+1. have a minimal api that requires no knowledge of the underlying layers (hyperdb, etc)
+2. implement all logic in pluggable API modules that offer logic and views over
+   the append-only log data in hyperdb
+3. work in node, electron, and the browser
+4. be very very fast for document insertion, iteration, and replication
+
 ## Usage
 
 Let's create a minimal distributed OpenStreetMap database:
