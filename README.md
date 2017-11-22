@@ -32,10 +32,11 @@ var hyper = hyperdb(ram, { valueEncoding: 'json' })
 var db = p2p(hyper)
 
 
-// add an API module that extends the database with OpenStreetMap primitives
-var OsmTypes = require('p2p-db-osm-types')
+// add an API module that extends the database with OpenStreetMap primitives &
+// operations
+var OsmTypes = require('p2p-db-osm')
 
-db.install('osm', OsmTypes())
+db.install('osm', Osm(db))
 
 db.osm.beginChangeset(function (err, id) {
   db.osm.insertNode({
@@ -54,7 +55,7 @@ var Spatial = require('p2p-db-point-store')
 
 var geo = GeoStore(memdb())
 
-db.install('geo', Spatial(geo))
+db.install('geo', Spatial(db, geo))
 
 
 
@@ -97,11 +98,12 @@ var p2p = require('p2p-db')
 Creates a new p2p-db `db`, using the
 [hyperdb](https://github.com/mafintosh/hyperdb) instance `hyper`.
 
-### db.install(name, apiModule)
+### db.install(name, api)
 
-Installs the API provided by the `apiModule` instance under the object key
-`name`. `name` becomes a property of `db`. An error is thrown if there is a name
-conflict.
+Installs the API provided by the object instance `api`.
+
+`name` becomes a property of `db` referring to the object `api`. An error is
+thrown if there is a name conflict with an existing API.
 
 ### var ds = db.replicate([opts])
 
@@ -113,6 +115,9 @@ Valid `opts` include:
 - `live` (Boolean): if `true`, the duplex stream will not close on its own: new
   changes will continue to be sent in both directions. Defaults to `false`.
 
+## Implementing a p2p-db API
+
+*TODO*
 
 ## Install
 

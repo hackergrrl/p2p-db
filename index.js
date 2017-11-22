@@ -5,7 +5,7 @@ function DB (hyper) {
 
   if (!hyper) throw new Error('missing param "hyper"')
 
-  // ...
+  // TODO: track all APIs plugged in
 }
 
 DB.prototype.install = function (name, api) {
