@@ -5,6 +5,8 @@ function DB (hyper) {
 
   if (!hyper) throw new Error('missing param "hyper"')
 
+  this.hyper = hyper
+
   // TODO: track all APIs plugged in
 }
 
