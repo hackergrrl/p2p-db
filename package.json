@@ -2,7 +2,7 @@
   "name": "p2p-db",
   "description": "an open-ended peer-to-peer database",
   "author": "Stephen Whitmore <sww@eight.net>",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "repository": {
     "url": "git://github.com/noffle/p2p-db.git"
   },
