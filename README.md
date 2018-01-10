@@ -4,15 +4,14 @@
 
 ## Mad Science
 
-I don't know what this is or what it will be or if the API will change. Still
-experimenting. Don't rely on this for anything, but *do* send PRs and issues
-with your thoughts!
+I'm still figuring out what this is and how it will work. Don't rely on this for
+anything yet, but *do* file issues or ping me on IRC `#ddem` with your thoughts!
 
 Semantic versioning will be respected.
 
 ## Goals
 
-1. have a minimal api that requires no knowledge of the underlying layers (hyperdb, etc)
+1. have a minimal api that requires no knowledge of the underlying layers (hyperdb, etc) for consumers
 2. implement all logic in pluggable API modules that offer logic and views over
    the append-only log data in hyperdb
 3. work in node, electron, and the browser
@@ -20,61 +19,57 @@ Semantic versioning will be respected.
 
 ## Usage
 
-Let's create a minimal distributed OpenStreetMap database:
+Let's create a minimal distributed OpenStreetMap database using p2p-db and
+[p2p-db-osm](https://github.com/noffle/p2p-db-osm):
+
+*TODO: finish making this example run!*
 
 ```js
-// database creation
 var p2p = require('p2p-db')
 var hyperdb = require('hyperdb')
 var ram = require('random-access-memory')
+var memdb = require('memdb')
+var GeoStore = require('grid-point-store')
 
-var hyper = hyperdb(ram, { valueEncoding: 'json' })
-var db = p2p(hyper)
+function createDatabase () {
+  var hyper = hyperdb(ram, { valueEncoding: 'json' })
+  var level = memdb()
 
+  return p2p([
+    // Base runtime dependency for p2p-db: a hyperdb instance
+    p2p.provide('hyperdb', hyper),
 
-// add an API module that extends the database with OpenStreetMap primitives &
-// operations
-var OsmTypes = require('p2p-db-osm')
+    // API that extends the database with OpenStreetMap primitives & operations
+    require('p2p-db-osm'),
+    p2p.provide('leveldb', level),  // needed for p2p-db-osm
+    p2p.provide('pointstore', new GeoStore(memdb())),  // needed for p2p-db-osm
+  ])
+}
 
-db.install('osm', Osm(db))
+var db = createDatabase()
 
-db.osm.beginChangeset(function (err, id) {
-  db.osm.insertNode({
-    lat: 14,
-    lon: 27,
-    changeset: id,
-    tags: {}
-  })
-  db.osm.finishChangeset(id)
+db.osm.create({
+  lat: 14,
+  lon: 27,
+  changeset: '123',
+  tags: {}
+}, function (err, elm) {
+  console.log(err || elm)
+
+  // sync with another p2p-db
+  var db2 = createDatabase()
+
+  var rs1 = db.replicate()
+  var rs2 = db2.replicate()
+
+  rs1.pipe(rs2).pipe(rs1).once('end', onDone)
 })
 
-// add a view for querying points
-var GeoStore = require('grid-point-store')
-var memdb = require('memdb')
-var Spatial = require('p2p-db-point-store')
-
-var geo = GeoStore(memdb())
-
-db.install('geo', Spatial(db, geo))
-
-
-
-// sync with another p2p-db
-var db2 = p2p(hyper(ram(), { valueEncoding: 'json' }))
-
-var rs1 = db.replicate()
-var rs2 = db2.replicate()
-
-rs1.pipe(rs2).pipe(rs1)
-
-rs1.once('end', onDone)
-rs1.once('error', onDone)
-
-function onDone (err) {
-  console.log('replication', err ? 'failed' : 'succeeded')
+function onDone () {
+  console.log('replication done')
 
   // query data
-  db2.geo.query([[-30, -30], [30, 30]], function (err, nodes) {
+  db2.osm.query([[-30, -30], [30, 30]], function (err, nodes) {
     console.log(err, nodes)
   })
 }
@@ -83,8 +78,8 @@ function onDone (err) {
 outputs
 
 ```
-replication succeeded
-{ lat: 14, lon: 27, changeset: '52033272934', tags: {} }
+replication done
+{ lat: 14, lon: 27, changeset: '123', tags: {} }
 ```
 
 ## API
@@ -93,17 +88,13 @@ replication succeeded
 var p2p = require('p2p-db')
 ```
 
-### var db = p2p(hyper)
+### var db = p2p(deps)
 
-Creates a new p2p-db `db`, using the
-[hyperdb](https://github.com/mafintosh/hyperdb) instance `hyper`.
+Creates a new p2p-db `db`, using the [depj](https://github.com/noffle/depj)
+dependencies given. At minimum p2p-db expects a `'hyperdb'`.
 
-### db.install(name, api)
-
-Installs the API provided by the object instance `api`.
-
-`name` becomes a property of `db` referring to the object `api`. An error is
-thrown if there is a name conflict with an existing API.
+The included dependencies form an API, exposed through the resultant `db`
+object.
 
 ### var ds = db.replicate([opts])
 
@@ -129,8 +120,9 @@ $ npm install p2p-db
 
 ## See Also
 
-- [flumedb](https://github.com/flumedb/flumedb)
 - [hyperdb](https://github.com/mafintosh/hyperdb)
+- [flumedb](https://github.com/flumedb/flumedb)
+- [depj](https://github.com/noffle/depj)
 
 ## License
 

@@ -1,23 +1,33 @@
 module.exports = DB
 
-function DB (hyper) {
-  if (!(this instanceof DB)) return new DB(hyper)
+var combine = require('depj')
 
-  if (!hyper) throw new Error('missing param "hyper"')
-
-  this.hyper = hyper
-
-  // TODO: track all APIs plugged in
+// Depject helper function
+DB.provide = function (name, obj) {
+  return {
+    gives: name,
+    needs: [],
+    create: function (api) {
+      return obj
+    }
+  }
 }
 
-DB.prototype.install = function (name, api) {
-  if (typeof api !== 'object') throw new Error('"api" must be an object')
-  if (this[name]) throw new Error('unable to install "'+name+'" -- property already present')
+function DB (deps) {
+  var baseApi = {
+    gives: 'replicate',
+    needs: ['hyperdb'],
+    create: function (api) {
+      return replicate.bind(api.hyperdb)
+    }
+  }
 
-  this[name] = api
+  deps = deps.concat(baseApi)
+
+  return combine(deps)
 }
 
-DB.prototype.replicate = function (opts) {
-  return this.hyper.replicate(opts)
+function replicate (opts) {
+  return this.replicate(opts)
 }
 
